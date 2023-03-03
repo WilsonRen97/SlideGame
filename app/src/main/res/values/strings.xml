@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Gravity\nGolang</string>
+    <string name="winnerX">Player1</string>
+    <string name="winnerY">Player2</string>
+    <string name="one_player_game_description">One Player Game</string>
+    <string name="two_player_game_description">Two Player Game</string>
+    <string name="question">About the App</string>
+    <string name="setting">Setting</string>
+    <string name="about">About this game</string>
+    <string name="description">This is a game about gravity gobang. The rule is the same as Gobang, but we also have gravity!!</string>
+    <string name="understand">Understand</string>
+    <string name="gameOver">Game Over</string>
+    <string name="winner_sentence"> is the winner. Play again?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="winCount"> wins count is :</string>
+    <string name="button_notification">Please hit one of the buttons</string>
+    <string name="music_question">Play Music?</string>
+    <string name="speed">Animation Speed</string>
+    <string name="speed_question">How fast do you want it to be?</string>
+    <string name="fast">fast</string>
+    <string name="normal">normal</string>
+    <string name="slow">slow</string>
+</resources>
