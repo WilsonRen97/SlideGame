@@ -40,7 +40,7 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
         p.color = Color.BLACK
         p2.color = Color.BLACK
         p2.textSize = 40f
-        setImageResource(R.drawable.back)
+        setImageResource(R.drawable.back2)
         scaleType = ScaleType.FIT_XY
 
         if (SettingsActivity.soundOn(c)) {
