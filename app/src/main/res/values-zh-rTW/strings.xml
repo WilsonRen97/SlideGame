@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">重力五子棋</string>
+    <string name="winnerX">棕色狗玩家</string>
+    <string name="winnerY">黑白狗玩家</string>
+    <string name="one_player_game_description">單人遊戲</string>
+    <string name="two_player_game_description">雙人遊戲</string>
+    <string name="question">關於這個App</string>
+    <string name="setting">設定</string>
+    <string name="about">關於這個遊戲</string>
+    <string name="description">遊戲規則與五子棋一樣，但加了重力的元素在裡面！！</string>
+    <string name="understand">了解</string>
+    <string name="gameOver">遊戲結束</string>
+    <string name="winner_sentence">是贏家！要再玩一次嗎？</string>
+    <string name="tie_sentence">遊戲平手！要再玩一次嗎？</string>
+    <string name="yes">好的</string>
+    <string name="no">不用了</string>
+    <string name="winCount">的勝利次數是：</string>
+    <string name="button_notification">請按下圓形的按鈕</string>
+    <string name="music_question">要播放音樂嗎？</string>
+    <string name="speed">動畫速度</string>
+    <string name="speed_question">你希望動畫速度有多快？</string>
+    <string name="fast">快</string>
+    <string name="normal">一般</string>
+    <string name="slow">慢</string>
+</resources>
