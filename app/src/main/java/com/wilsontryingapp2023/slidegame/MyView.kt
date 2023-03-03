@@ -25,20 +25,21 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
     private var mathDone: Boolean = false
     private val buttons: Array<Btn?> = arrayOfNulls(10)
 
-    private var tokens : ArrayList<Token> = ArrayList()
+    private var ab: AlertDialog.Builder = AlertDialog.Builder(context)
+    private var tokens: ArrayList<Token> = ArrayList()
     private var timer: Timer? = null
     private var engine: GameBoard = GameBoard()
     private var currentPlayer: Player = Player.X
     private var soundTrack: MediaPlayer? = null
     private var player1WinCount = 0
     private var player2WinCount = 0
-    var mode : GameMode? = null
+    var mode: GameMode? = null
 
     init {
         // 遊戲初始的設定
         p.color = Color.BLACK
         p2.color = Color.BLACK
-        p2.textSize = 70f
+        p2.textSize = 40f
         setImageResource(R.drawable.back)
         scaleType = ScaleType.FIT_XY
 
@@ -53,7 +54,9 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
     override fun onDraw(c: Canvas) {
         super.onDraw(c)
         if (!mathDone) {
-            // 一定需要再mathDone內部設定的部分
+            // 先設定mathDone已經完成
+            // 取得螢幕的寬度與高度，並根據螢幕寬高來設定p的strokeWidth, sideMargin, verticalMargin, gridLength等等
+            // 再來根據以上數值，執行makeButtons()
             mathDone = true
             w = width.toFloat()
             h = height.toFloat()
@@ -63,16 +66,30 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
             gridLength = (w - 2 * sideMargin) / 5
             makeButtons()
 
+            // 從factory拿到timer，並且register MyView物件
             timer = Timer.factory(Prefs.getSpeed(context).toLong(), Looper.getMainLooper())
             timer!!.register(this)
         }
+
+        // 每次畫圖時，更新玩家勝負資訊
         val winnerState1: String = resources.getString(R.string.winnerX)
         val winnerState2: String = resources.getString(R.string.winnerY)
-        c.drawText(winnerState1 + resources.getString(R.string.winCount) + player1WinCount, 50f, 100f, p2)
-        c.drawText(winnerState2 + resources.getString(R.string.winCount) + player2WinCount, 50f, 250f, p2)
+        c.drawText(
+            winnerState1 + " " + resources.getString(R.string.winCount) + player1WinCount,
+            50f,
+            100f,
+            p2
+        )
+        c.drawText(
+            winnerState2 + " " + resources.getString(R.string.winCount) + player2WinCount,
+            50f,
+            150f,
+            p2
+        )
 
-        // draw the grids, tokens and buttons
+        // 畫出Grid
         drawGrid(c)
+        // 檢查有沒有跳出螢幕的token
         for (token in tokens) {
             if (!token.isVisible(h)) {
                 token.changeVelocity(0, 0)
@@ -81,28 +98,37 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                 break
             }
         }
+        // 畫出所有的tokens
         for (token in tokens) {
             token.draw(c)
         }
+        // 畫出所有的buttons
         for (button in buttons) {
             button!!.drawBtn(c)
         }
-        var check = true
+
+        var checkWeCanProceed = true
         for (token in tokens) {
             // 等到所有的token的速度都歸零後，才能確認遊戲有無贏家
             if (token.velocity.x != 0f || token.velocity.y != 0f) {
-                check = false
+                checkWeCanProceed = false
             }
         }
-
-        if (check) {
+        // 確認有無贏家，以及讓AI做出下個動作
+        if (checkWeCanProceed) {
+            // 如果遊戲有贏家了
             if (engine.checkForWin() !== Player.BLANK) {
                 timer!!.setPaused()
-                val ab: AlertDialog.Builder = AlertDialog.Builder(context)
                 ab.setTitle(R.string.gameOver)
-                var again : String? = null
+                var again: String? = null
+                var winnerString: String? = null
                 if (engine.checkForWin() !== Player.TIE) {
-                    again = engine.checkForWin().toString() + resources.getString(R.string.winner_sentence)
+                    winnerString = if (engine.checkForWin() == Player.X) {
+                        resources.getString(R.string.winnerX)
+                    } else {
+                        resources.getString(R.string.winnerY)
+                    }
+                    again = winnerString + " " + resources.getString(R.string.winner_sentence)
                 } else {
                     again = resources.getString(R.string.tie_sentence)
                 }
@@ -111,7 +137,7 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                 updateWinner(engine.checkForWin())
                 ab.setCancelable(false)
                 ab.setPositiveButton(R.string.yes) { _, _ -> restartGame() }
-                ab.setNegativeButton(R.string.no) {_, _ ->
+                ab.setNegativeButton(R.string.no) { _, _ ->
                     // 不同MyView物件，需要做的設定，要放在這裡
                     Token.resetPlayer()
                     timer!!.unPaused()
@@ -121,16 +147,16 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                 val box: AlertDialog = ab.create()
                 box.show()
             } else {
+                // 如果遊戲還沒有贏家，且目前是跟AI玩的話，且目前輪到AI下的話，我們可以讓AI做出move
                 if (mode == GameMode.ONE_PLAYER && currentPlayer == Player.O) {
-                    // pick a random button and submit
                     val num: Int = engine.aiMove()
-                    if (num < 5) {
-//                        char[] letters = {'A', 'B', 'C', 'D', 'E'};
-//                        int randomNum = (int) Math.floor(Math.random() * 5);
-//                        Btn button = buttons[randomNum];
-                        val button: Btn? = buttons[num]
-                        engine.submitMove(button!!.char)
-                        val token = Token(
+                    val button: Btn? = buttons[num]
+                    engine.submitMove(button!!.char)
+
+                    // 依據數字來判斷，AI選定的是哪個button
+                    // 0, 1, 2, 3, 4都是橫向的buttons, 5, 6, 7, 8, 9都是直向的buttons
+                    val token: Token = if (num < 5) {
+                        Token(
                             resources,
                             gridLength.toInt(),
                             button.boundsX(),
@@ -138,16 +164,8 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                             ('A'.code - 1).toChar(),
                             button.char
                         )
-                        tokens.add(token)
-                        timer!!.register(token)
-                        // move the neighbors
-                        val neighbors: ArrayList<Token> = ArrayList()
-                        neighbors.add(token)
-                        moveVerticalNeighbors(button, neighbors)
                     } else {
-                        val button: Btn? = buttons[num]
-                        engine.submitMove(button!!.char)
-                        val token = Token(
+                        Token(
                             resources,
                             gridLength.toInt(),
                             button.boundsX(),
@@ -155,14 +173,19 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                             button.char,
                             '0'
                         )
-                        tokens.add(token)
-                        timer!!.register(token)
-
-                        // move the neighbors
-                        val neighbors: ArrayList<Token> = ArrayList()
-                        neighbors.add(token)
+                    }
+                    tokens.add(token)
+                    timer!!.register(token)
+                    // move the neighbors
+                    val neighbors: ArrayList<Token> = ArrayList()
+                    neighbors.add(token)
+                    if (num < 5) {
+                        moveVerticalNeighbors(button, neighbors)
+                    } else {
                         moveHorizontalNeighbors(button, neighbors)
                     }
+
+                    // 改變目前的Player
                     changePlayer()
                 }
             }
@@ -182,6 +205,7 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
         Token.resetPlayer()
         timer!!.clearAll()
         timer!!.unPaused()
+
         tokens.clear()
         mathDone = false
         engine = GameBoard()
@@ -192,7 +216,8 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
         // Token.resetPlayer()
         // timer!!.clearAll()
         // timer!!.unPaused()
-        // tokens的部分，在新的MyView物件中會重新設定
+
+        // tokens.clear()的部分，在新的MyView物件中會重新設定新的tokens arraylist，所以不用管
         // math false的部分，在新的MyView物件中會重新設定
         // engine = GameBoard()的部分，在新的MyView物件中會重新設定
         // currentPlayer = Player.X的部分，在新的MyView物件中會重新設定
@@ -216,8 +241,8 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                     btnTouched = true
                     changePlayer()
                     // create a token, first check if it's a row button
-                    if (button.isRowBtn()) {
-                        val token = Token(
+                    val token: Token = if (button.isRowBtn()) {
+                        Token(
                             resources,
                             gridLength.toInt(),
                             button.boundsX(),
@@ -225,15 +250,8 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                             ('A'.code - 1).toChar(),
                             button.char
                         )
-                        tokens.add(token)
-                        timer!!.register(token)
-
-                        // move the neighbors
-                        val neighbors: ArrayList<Token> = ArrayList()
-                        neighbors.add(token)
-                        moveVerticalNeighbors(button, neighbors)
                     } else {
-                        val token = Token(
+                        Token(
                             resources,
                             gridLength.toInt(),
                             button.boundsX(),
@@ -241,18 +259,25 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                             button.char,
                             '0'
                         )
-                        tokens.add(token)
-                        timer!!.register(token)
-
-                        // move the neighbors
-                        val neighbors: ArrayList<Token> = ArrayList()
-                        neighbors.add(token)
+                    }
+                    tokens.add(token)
+                    timer!!.register(token)
+                    // move the neighbors
+                    val neighbors: ArrayList<Token> = ArrayList()
+                    neighbors.add(token)
+                    if (button.isRowBtn()) {
+                        moveVerticalNeighbors(button, neighbors)
+                    } else {
                         moveHorizontalNeighbors(button, neighbors)
                     }
                 }
             }
             if (!btnTouched) {
-                val t: Toast = Toast.makeText(context, resources.getString(R.string.button_notification), Toast.LENGTH_SHORT)
+                val t: Toast = Toast.makeText(
+                    context,
+                    resources.getString(R.string.button_notification),
+                    Toast.LENGTH_SHORT
+                )
                 t.show()
             }
         }
@@ -270,10 +295,10 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
      * @param button
      * @param neighborList
      */
-    private fun moveVerticalNeighbors(button: Btn?, neighborList: ArrayList<Token>) {
+    private fun moveVerticalNeighbors(button: Btn, neighborList: ArrayList<Token>) {
         val rowLetters = charArrayOf('A', 'B', 'C', 'D', 'E')
         for (i in rowLetters.indices) {
-            val dog: Token? = findDog(rowLetters[i], button!!.char)
+            val dog: Token? = findDog(rowLetters[i], button.char)
             if (dog != null) {
                 neighborList.add(dog)
             } else {
@@ -399,11 +424,13 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
         val gridXLeft2 = sideMargin - gridSize
         val gridYTop = verticalMargin - gridSize
         val gridYTop2 = verticalMargin
+        // 0, 1, 2, 3, 4都是橫向的buttons
         buttons[0] = Btn(resources, '1', gridSize, gridXLeft, gridYTop)
         buttons[1] = Btn(resources, '2', gridSize, gridXLeft + gridSize, gridYTop)
         buttons[2] = Btn(resources, '3', gridSize, gridXLeft + gridSize * 2, gridYTop)
         buttons[3] = Btn(resources, '4', gridSize, gridXLeft + gridSize * 3, gridYTop)
         buttons[4] = Btn(resources, '5', gridSize, gridXLeft + gridSize * 4, gridYTop)
+        // 5, 6, 7, 8, 9都是直向的buttons
         buttons[5] = Btn(resources, 'A', gridSize, gridXLeft2, gridYTop2)
         buttons[6] = Btn(resources, 'B', gridSize, gridXLeft2, gridYTop2 + gridSize)
         buttons[7] = Btn(resources, 'C', gridSize, gridXLeft2, gridYTop2 + gridSize * 2)
@@ -442,31 +469,20 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
     }
 
     /**
-     * pause music
-     */
-    private fun pauseMusic() {
-        soundTrack?.pause()
-    }
-
-    private fun restartMusic() {
-        soundTrack?.start()
-    }
-
-    /**
      * call pause music method
      */
     fun gotBackground() {
-        pauseMusic()
+        soundTrack?.pause()
     }
 
     fun gotForeground() {
-        restartMusic()
+        soundTrack?.start()
     }
 
     /**
      * release the soundtrack
      */
     fun cleanupBeforeShutDown() {
-        soundTrack?.release()
+        soundTrack?.release() // 釋放MediaPlayer使用的音樂檔案
     }
 }

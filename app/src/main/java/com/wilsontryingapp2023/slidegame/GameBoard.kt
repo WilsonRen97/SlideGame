@@ -1,6 +1,5 @@
 package com.wilsontryingapp2023.slidegame
 
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.floor
 
 class GameBoard {
@@ -141,15 +140,14 @@ class GameBoard {
      * @return the value of the winning player, X or O or TIE. Returns BLANK if no one has yet won (the most common state).
      */
     fun checkForWin(): Player {
-        var winner: Player = Player.BLANK
-        var winners: ArrayList<Player> = ArrayList()
+        val winners: ArrayList<Player> = ArrayList()
 
         //check all rows
         for (i in 0 until DIM) {
             if (grid[i][0] !== Player.BLANK) {
                 val firstElement = grid[i][0]!!
                 // 確認是否有跟第一個element不同的值
-                var allSame : Boolean = true
+                var allSame = true
                 for (j in 0 until DIM) {
                     if (grid[i][j] != firstElement) {
                         allSame = false
@@ -174,7 +172,7 @@ class GameBoard {
         for (i in 0 until DIM) {
             if (grid[0][i] !== Player.BLANK) {
                 val firstElement = grid[0][i]!!
-                var allSame : Boolean = true
+                var allSame = true
                 for (j in 0 until DIM) {
                     if (grid[j][i] !== firstElement) {
                         allSame = false
@@ -200,7 +198,7 @@ class GameBoard {
         //check top-left -> bottom-right diagonal
         if (grid[0][0] !== Player.BLANK) {
             val firstElement = grid[0][0]!!
-            var allSame : Boolean = true
+            var allSame = true
             for (i in 0 until DIM) {
                 if (grid[i][i] != firstElement) {
                     allSame = false
@@ -215,7 +213,7 @@ class GameBoard {
         //check bottom-left -> top-right diagonal
         if (grid[DIM - 1][0] !== Player.BLANK) {
             val firstElement = grid[DIM - 1][0]!!
-            var allSame : Boolean = true
+            var allSame = true
             for (i in 0 until DIM) {
                 if (grid[DIM - 1 - i][i] !== firstElement) {
                     allSame = false

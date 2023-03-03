@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Gravity\nGolang</string>
-    <string name="winnerX">Player1</string>
-    <string name="winnerY">Player2</string>
+    <string name="winnerX">Brown Dog Player</string>
+    <string name="winnerY">Black/White Dog Player</string>
     <string name="one_player_game_description">One Player Game</string>
     <string name="two_player_game_description">Two Player Game</string>
     <string name="question">About the App</string>
@@ -14,7 +14,7 @@
     <string name="tie_sentence">This game is a tie. Play again?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
-    <string name="winCount"> wins count is :</string>
+    <string name="winCount">wins count is :</string>
     <string name="button_notification">Please hit one of the buttons</string>
     <string name="music_question">Play Music?</string>
     <string name="speed">Animation Speed</string>

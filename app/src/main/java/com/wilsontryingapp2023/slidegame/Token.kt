@@ -8,7 +8,7 @@ class Token(res: Resources?, size: Int, x: Float, y: Float, row: Char, column: C
     private val bounds: RectF
     private var dog1: Bitmap
     private var dog2: Bitmap
-    private var dog: Bitmap? = null
+    private var dog: Bitmap
     val velocity: PointF
     var row: Char
     var column: Char
