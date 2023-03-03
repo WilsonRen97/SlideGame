@@ -1,5 +1,6 @@
 package com.wilsontryingapp2023.slidegame
 
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.floor
 
 class GameBoard {
@@ -141,82 +142,91 @@ class GameBoard {
      */
     fun checkForWin(): Player {
         var winner: Player = Player.BLANK
-        var tmpWinner: Player
+        var winners: ArrayList<Player> = ArrayList()
 
         //check all rows
         for (i in 0 until DIM) {
             if (grid[i][0] !== Player.BLANK) {
-                tmpWinner = grid[i][0]!!
+                val firstElement = grid[i][0]!!
+                // 確認是否有跟第一個element不同的值
+                var allSame : Boolean = true
                 for (j in 0 until DIM) {
-                    if (grid[i][j] !== tmpWinner) {
-                        tmpWinner = Player.BLANK
+                    if (grid[i][j] != firstElement) {
+                        allSame = false
                         break
                     }
                 }
-                if (tmpWinner !== Player.BLANK) {
-                    winner = if (winner === Player.BLANK) {
-                        tmpWinner
-                    } else {
-                        return Player.TIE
-                    }
+                if (allSame) {
+                    winners.add(firstElement)
                 }
             }
+        }
+        if (winners.size == 1) {
+            return winners[0]
+        } else if (winners.size > 1) {
+            return Player.TIE
+        } else {
+            // row的部分沒有發現贏家，所以winners arraylist還是空的，
+            // 可以繼續往下走
         }
 
         //check all columns
-        tmpWinner = Player.BLANK
         for (i in 0 until DIM) {
             if (grid[0][i] !== Player.BLANK) {
-                tmpWinner = grid[0][i]!!
+                val firstElement = grid[0][i]!!
+                var allSame : Boolean = true
                 for (j in 0 until DIM) {
-                    if (grid[j][i] !== tmpWinner) {
-                        tmpWinner = Player.BLANK
+                    if (grid[j][i] !== firstElement) {
+                        allSame = false
                         break
                     }
                 }
-                if (tmpWinner !== Player.BLANK) {
-                    winner = if (winner === Player.BLANK) {
-                        tmpWinner
-                    } else {
-                        return Player.TIE
-                    }
+                if (allSame) {
+                    winners.add(firstElement)
                 }
             }
         }
 
-        //at this point, either there's a tie, or there's not.
-        //You can't have a tie with diagonals.
-        if (winner !== Player.BLANK) {
-            return winner
+        if (winners.size == 1) {
+            return winners[0]
+        } else if (winners.size > 1) {
+            return Player.TIE
+        } else {
+            // columns的部分沒有發現贏家，所以winners arraylist還是空的，
+            // 可以繼續往下走
         }
+
 
         //check top-left -> bottom-right diagonal
         if (grid[0][0] !== Player.BLANK) {
-            winner = grid[0][0]!!
+            val firstElement = grid[0][0]!!
+            var allSame : Boolean = true
             for (i in 0 until DIM) {
-                if (grid[i][i] !== winner) {
-                    winner = Player.BLANK
+                if (grid[i][i] != firstElement) {
+                    allSame = false
                     break
                 }
             }
-            if (winner !== Player.BLANK) {
-                return winner //5 in a diagonal!
+            if (allSame) {
+                return firstElement
             }
         }
 
         //check bottom-left -> top-right diagonal
         if (grid[DIM - 1][0] !== Player.BLANK) {
-            winner = grid[DIM - 1][0]!!
+            val firstElement = grid[DIM - 1][0]!!
+            var allSame : Boolean = true
             for (i in 0 until DIM) {
-                if (grid[DIM - 1 - i][i] !== winner) {
-                    winner = Player.BLANK
+                if (grid[DIM - 1 - i][i] !== firstElement) {
+                    allSame = false
                     break
                 }
             }
-            if (winner !== Player.BLANK) {
-                return winner //5 in a diagonal!
+            if (allSame) {
+                return firstElement
             }
         }
-        return winner
+
+        return Player.BLANK
     }
 }

@@ -21,26 +21,27 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
     private var sideMargin = 0f
     private var verticalMargin = 0f
     private var gridLength = 0f
-    private var mathDone: Boolean
     private var gridSize = 0
+    private var mathDone: Boolean = false
     private val buttons: Array<Btn?> = arrayOfNulls(10)
-    private val tokens = ArrayList<Token>()
+
+    private var tokens : ArrayList<Token> = ArrayList()
     private var timer: Timer? = null
     private var engine: GameBoard = GameBoard()
-    private var currentPlayer: Player
+    private var currentPlayer: Player = Player.X
     private var soundTrack: MediaPlayer? = null
     private var player1WinCount = 0
     private var player2WinCount = 0
     var mode : GameMode? = null
 
     init {
+        // 遊戲初始的設定
         p.color = Color.BLACK
         p2.color = Color.BLACK
         p2.textSize = 70f
-        mathDone = false
-        currentPlayer = Player.X
         setImageResource(R.drawable.back)
         scaleType = ScaleType.FIT_XY
+
         if (Prefs.soundOn(c)) {
             soundTrack = MediaPlayer.create(c, R.raw.ukulele)
             soundTrack?.start()
@@ -52,7 +53,7 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
     override fun onDraw(c: Canvas) {
         super.onDraw(c)
         if (!mathDone) {
-            println("we are here....")
+            // 一定需要再mathDone內部設定的部分
             mathDone = true
             w = width.toFloat()
             h = height.toFloat()
@@ -61,9 +62,8 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
             verticalMargin = (h - w + 2 * sideMargin) / 2
             gridLength = (w - 2 * sideMargin) / 5
             makeButtons()
+
             timer = Timer.factory(Prefs.getSpeed(context).toLong(), Looper.getMainLooper())
-            timer!!.unPaused()
-            timer!!.clearAll()
             timer!!.register(this)
         }
         val winnerState1: String = resources.getString(R.string.winnerX)
@@ -89,22 +89,33 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
         }
         var check = true
         for (token in tokens) {
+            // 等到所有的token的速度都歸零後，才能確認遊戲有無贏家
             if (token.velocity.x != 0f || token.velocity.y != 0f) {
                 check = false
             }
         }
+
         if (check) {
-            if (engine.checkForWin() !== Player.BLANK && engine.checkForWin() !== Player.TIE) {
+            if (engine.checkForWin() !== Player.BLANK) {
                 timer!!.setPaused()
                 val ab: AlertDialog.Builder = AlertDialog.Builder(context)
                 ab.setTitle(R.string.gameOver)
-                val again: String =
-                    engine.checkForWin().toString() + resources.getString(R.string.winner_sentence)
+                var again : String? = null
+                if (engine.checkForWin() !== Player.TIE) {
+                    again = engine.checkForWin().toString() + resources.getString(R.string.winner_sentence)
+                } else {
+                    again = resources.getString(R.string.tie_sentence)
+                }
+
                 ab.setMessage(again)
                 updateWinner(engine.checkForWin())
                 ab.setCancelable(false)
                 ab.setPositiveButton(R.string.yes) { _, _ -> restartGame() }
                 ab.setNegativeButton(R.string.no) {_, _ ->
+                    // 不同MyView物件，需要做的設定，要放在這裡
+                    Token.resetPlayer()
+                    timer!!.unPaused()
+                    timer!!.clearAll()
                     (context as Activity).finish()
                 }
                 val box: AlertDialog = ab.create()
@@ -167,14 +178,24 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
     }
 
     private fun restartGame() {
-        Token.setPlayer()
+        // 遊戲結束時，在同個MyView物件中，需要被重新設定的部分
+        Token.resetPlayer()
         timer!!.clearAll()
-        tokens.clear()
         timer!!.unPaused()
+        tokens.clear()
         mathDone = false
         engine = GameBoard()
         currentPlayer = Player.X
         invalidate()
+
+        // 遊戲結束時，若有新的MyView物件的話，需要被重新設定的部分：
+        // Token.resetPlayer()
+        // timer!!.clearAll()
+        // timer!!.unPaused()
+        // tokens的部分，在新的MyView物件中會重新設定
+        // math false的部分，在新的MyView物件中會重新設定
+        // engine = GameBoard()的部分，在新的MyView物件中會重新設定
+        // currentPlayer = Player.X的部分，在新的MyView物件中會重新設定
     }
 
     override fun onTouchEvent(m: MotionEvent): Boolean {

@@ -37,7 +37,6 @@ class Timer(d: Long, looper: Looper) : Handler(looper) {
     }
 
     private fun notifyTickListeners() {
-        println(listeners.size)
         for (t in listeners) {
             t.tick()
         }

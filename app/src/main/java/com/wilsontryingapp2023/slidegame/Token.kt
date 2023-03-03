@@ -99,9 +99,9 @@ class Token(res: Resources?, size: Int, x: Float, y: Float, row: Char, column: C
     }
 
     companion object {
-        private var player = 0
-        private var movers = 0
-        fun setPlayer() {
+        var player = 0
+        var movers = 0
+        fun resetPlayer() {
             player = 0
         }
 
