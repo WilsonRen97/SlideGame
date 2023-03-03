@@ -18,6 +18,7 @@ class Timer(d: Long, looper: Looper) : Handler(looper) {
     }
 
     override fun handleMessage(msg: Message) {
+        println(listeners.size)
         if (!paused) {
             notifyTickListeners()
         }

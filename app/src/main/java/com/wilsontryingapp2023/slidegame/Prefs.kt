@@ -18,6 +18,7 @@ class Prefs : PreferenceActivity() {
         music.setSummaryOff(R.string.no)
         music.setDefaultValue(true)
         music.key = "MUSIC_PREF"
+
         val ls = ListPreference(this)
         ls.setTitle(R.string.speed)
         ls.setSummary(R.string.speed_question)

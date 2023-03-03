@@ -46,7 +46,7 @@ class SplashActivity : Activity() {
             box.show()
         }
         settingBtn!!.setOnClickListener {_ ->
-            val i = Intent(this, Prefs::class.java)
+            val i = Intent(this, SettingsActivity::class.java)
             startActivity(i)
         }
     }

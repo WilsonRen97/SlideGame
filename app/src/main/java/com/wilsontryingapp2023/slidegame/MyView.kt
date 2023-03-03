@@ -43,7 +43,7 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
         setImageResource(R.drawable.back)
         scaleType = ScaleType.FIT_XY
 
-        if (Prefs.soundOn(c)) {
+        if (SettingsActivity.soundOn(c)) {
             soundTrack = MediaPlayer.create(c, R.raw.ukulele)
             soundTrack?.start()
             soundTrack?.isLooping = true
@@ -67,7 +67,12 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
             makeButtons()
 
             // 從factory拿到timer，並且register MyView物件
-            timer = Timer.factory(Prefs.getSpeed(context).toLong(), Looper.getMainLooper())
+            timer = Timer.factory(SettingsActivity.getSpeed(context).toLong(), Looper.getMainLooper())
+            // 我們會執行mathDone內部的程式碼，只有幾種可能：(1)第一次開啟App以及遊戲,
+            // (2)遊戲玩到一半，透過返回鍵回到SplashActivity, (3)選擇No不繼續玩遊戲，執行了finish()
+            // 在第三種情況時，我們的Timer是被固定住的。所以每當mathDone是false時，代表我們遇到以上三種情況之一，
+            // 我們用timer!!.unPaused()可以確保Timer可以繼續運作，從被固定的情況下回到運作情況
+            timer!!.unPaused()
             timer!!.register(this)
         }
 
@@ -138,11 +143,7 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
                 ab.setCancelable(false)
                 ab.setPositiveButton(R.string.yes) { _, _ -> restartGame() }
                 ab.setNegativeButton(R.string.no) { _, _ ->
-                    // 不同MyView物件，需要做的設定，要放在這裡
-                    Token.resetPlayer()
-                    timer!!.unPaused()
-                    timer!!.clearAll()
-                    (context as Activity).finish()
+                    (context as Activity).finish() // 會去執行MainActivity的onDestroy()，onDestroy()會去執行MyView的cleanupBeforeShutDown()
                 }
                 val box: AlertDialog = ab.create()
                 box.show()
@@ -483,6 +484,8 @@ class MyView(c: Context?) : AppCompatImageView(c!!), TickListener {
      * release the soundtrack
      */
     fun cleanupBeforeShutDown() {
+        Token.resetPlayer()
+        timer!!.clearAll()
         soundTrack?.release() // 釋放MediaPlayer使用的音樂檔案
     }
 }
